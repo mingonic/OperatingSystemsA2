@@ -1,13 +1,18 @@
 /**
- * This program defines a sudoku puzzle solution and then determines whether
- * the puzzle solution is valid using 27 threads. 9 for each 3x3 subsection, 9
- * for the 9 columns, and 9 for the 9 rows. Each thread updates their index in
- * a global array to 1 indicating that the corresponding region in the puzzle
- * they were responsible for is valid. The program then waits for all threads
- * to complete their execution and checks if all entries in the valid array have
- * been set to 1. If yes, the solution is valid. If not, solution is invalid.
+ *Design a multithreaded Sudoku Solution Checker program
+ *that accepts a Sudoku solution from the user as input,
+ *determines whether the solution us valid or invalid.
  */
 
+/**
+ *Approach:
+ *Using 27 threads this program determines is a Sudoku Solution
+ *is correct. This program uses 9 threads for each of the 9 columns
+ *and 9 for each of the 9 rows. Each block contains a 3x3 set thus 27
+ *threads will be needed in total.
+ *Using a global array to see if the threads return valide by return 1
+ *if row is valide. If not the solution is not valide.
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -15,16 +20,10 @@
 
 #define num_threads 27
 
-/*
- *Initialize the array which worker threads can update to 1 if the
- *corresponding region of the sudoku puzzle they were responsible
- *for is valid.
- */
-
+//This array is used for the validation step
 int valid[num_threads] = {0};
 
 // Struct that stores the data to be passed to threads
-
 typedef struct {
 
   int row;
@@ -32,20 +31,20 @@ typedef struct {
 
 } parameters;
 
-// Sudoku puzzle to be solved
+// test example
 int sudoku[9][9] = {
-  {6, 2, 4, 5, 3, 9, 1, 8, 7},
-  {5, 1, 9, 7, 2, 8, 6, 3, 4},
-  {8, 3, 7, 6, 1, 4, 2, 9, 5},
-  {1, 4, 3, 8, 6, 5, 7, 2, 9},
-  {9, 5, 8, 2, 4, 7, 3, 6, 1},
-  {7, 6, 2, 3, 9, 1, 4, 5, 8},
-  {3, 7, 1, 9, 5, 6, 8, 4, 2},
-  {4, 9, 6, 1, 8, 2, 5, 7, 3},
-  {2, 8, 5, 4, 7, 3, 9, 1, 6}
+  {1, 5, 2, 4, 8, 9, 3, 7, 6},
+  {7, 3, 9, 2, 5, 6, 8, 4, 1},
+  {4, 6, 8, 3, 7, 1, 2, 9, 5},
+  {3, 8, 7, 1, 2, 4, 6, 5, 9},
+  {5, 9, 1, 7, 6, 3, 4, 2, 8},
+  {2, 4, 6, 8, 9, 5, 7, 1, 3},
+  {9, 1, 4, 6, 3, 7, 5, 8, 2},
+  {6, 2, 5, 9, 4, 8, 1, 3, 7},
+  {8, 7, 3, 5, 1, 2, 9, 6, 4}
 };
 
-// Method that determines if numbers 1-9 only appear once in a column
+// checks is only 1 appearence of 1-9 in column
 void *isColumnValid(void* param) {
 
   // Confirm that parameters indicate a valid col subsection
@@ -74,7 +73,7 @@ void *isColumnValid(void* param) {
   pthread_exit(NULL);
 }
 
-// Method that determines if numbers 1-9 only appear once in a row
+// checks is only 1 appearence of 1-9 in row
 void *isRowValid(void* param) {
 
   // Confirm that parameters indicate a valid row subsection
@@ -104,7 +103,7 @@ void *isRowValid(void* param) {
   pthread_exit(NULL);
 }
 
-// Method that determines if numbers 1-9 only appear once in a 3x3 subsection
+// checks is only 1 appearence of 1-9 in 3x3 blocks
 void *is3x3Valid(void* param) {
 
   // Confirm that parameters indicate a valid 3x3 subsection
@@ -139,7 +138,6 @@ int main(int argc, char* argv[]) {
   pthread_t threads[num_threads];
   int threadIndex = 0;
   int i,j;
-  // Display the Sudoku board which we want to validate:-
   printf("\nThe Sudoku Board is displayed below.....\n");
   for(i=0;i<9;i++){
     for(j=0;j<9;j++){
@@ -147,34 +145,37 @@ int main(int argc, char* argv[]) {
     }
     printf("\n");
   }
-  // Create 9 threads for 9 3x3 subsections, 9 threads for 9 columns and 9 threads for 9 rows.
-  // This will end up with a total of 27 threads.
+  // Creats the 27 threads
   for (i = 0; i < 9; i++) {
     for (j = 0; j < 9; j++) {
       if (i%3 == 0 && j%3 == 0) {
         parameters *data = (parameters *) malloc(sizeof(parameters));
         data->row = i;
         data->column = j;
-        pthread_create(&threads[threadIndex++], NULL, is3x3Valid, data); // 3x3 subsection threads
+        // 3x3 subsection threads
+        pthread_create(&threads[threadIndex++], NULL, is3x3Valid, data);
       }
       if (i == 0) {
         parameters *columnData = (parameters *) malloc(sizeof(parameters));
         columnData->row = i;
         columnData->column = j;
-        pthread_create(&threads[threadIndex++], NULL, isColumnValid, columnData); // column threads
+        // column threads
+        pthread_create(&threads[threadIndex++], NULL, isColumnValid, columnData);
       }
       if (j == 0) {
         parameters *rowData = (parameters *) malloc(sizeof(parameters));
         rowData->row = i;
         rowData->column = j;
-        pthread_create(&threads[threadIndex++], NULL, isRowValid, rowData); // row threads
+        // row threads
+        pthread_create(&threads[threadIndex++], NULL, isRowValid, rowData);
       }
     }
   }
   for (i = 0; i < num_threads; i++) {
-    pthread_join(threads[i], NULL); // Wait for all threads to finish
+    // Wait for finish
+    pthread_join(threads[i], NULL);
   }
-  // If any of the entries in the valid array are 0, then the sudoku solution is invalid
+  // if any number is 0 then invalid
   for (i = 0; i < num_threads; i++) {
     if (valid[i] == 0) {
       printf("Sudoku Board is invalid!\n");
