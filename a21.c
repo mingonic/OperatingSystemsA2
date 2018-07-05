@@ -26,21 +26,25 @@ void *row(void* p) {
         pthread_exit(NULL);
     }
 
-    int checker[9] = {0};
-    int i;
-    for (i = 0; i < 9; i++) {
-        int val = sudoku[row][i];
-        if (val > 0 && val < 10) {
-            if (checker[val-1] == 1) {
+    //Checks for one unique number between 1 and 9 in each row
+    int check = 0, j, i;
+    for(j = 1; j < 10; j++) {
+        for(i =0; i < 9; i++) {
+            int val = sudoku[row][i];
+            if (val < 1 || val > 9) {
                 pthread_exit(NULL);
-            } else {
-                checker[val-1] = 1;
-            }   
-        }  
+            }
+            if(val == j){
+                check++;
+            }
+        }
+        if(check != 1){
+            pthread_exit(NULL);
+        }
+        check = 0;
     }
 
     //Marks the specified array element to show row is valid
-    printf("row %d is good\n", row);
     valid[9 + row] = 1;
     pthread_exit(NULL);
 }
@@ -56,21 +60,25 @@ void *column(void* p) {
         pthread_exit(NULL);
     }
 
-    int checker[9] = {0};
-    int i;
-    for (i = 0; i < 9; i++) {
-        int val = sudoku[i][col];
-        if (val > 0 && val < 10) {
-            if (checker[val-1] == 1) {
+    //Checks for one unique number between 1 and 9 in each column
+    int check = 0, j, i;
+    for(j = 1; j < 10; j++) {
+        for(i =0; i < 9; i++) {
+            int val = sudoku[i][col];
+            if (val < 1 || val > 9) {
                 pthread_exit(NULL);
-            } else {
-                checker[val-1] = 1;
-            }   
+            }
+            if(val == j){
+                check++;
+            }
         }
+        if(check != 1){
+            pthread_exit(NULL);
+        }
+        check = 0;
     }
 
     //Marks the specified array element to show column is valid
-    printf("col %d is good\n", col);
     valid[18 + col] = 1;
     pthread_exit(NULL);
 }
@@ -96,20 +104,25 @@ void *cube(void* p) {
         }
     }
 
-    int checker[9] = {0};
-    for (i = 0; i < 9; i++) {
-        int val = cube[i];
-        if (val > 0 && val < 10) {
-            if (checker[val-1] == 1) {
+    //Checks for one unique number between 1 and 9 in the 3x3 matrix
+    int check = 0;
+    for(j = 1; j < 10; j++) {
+        for(i = 0; i < 9; i++) {
+            int val = cube[i];
+            if (val < 1 || val > 9) {
                 pthread_exit(NULL);
-            } else {
-                checker[val-1] = 1;
-            }   
-        } 
+            }
+            if(val == j){
+                check++;
+            }
+        }
+        if(check != 1){
+            pthread_exit(NULL);
+        }
+        check = 0;
     }
 
     //Marks the specified array element to show that the 3x3 matrix is valid
-    printf("cube %d is good\n", row + col/3);
     valid[row + col/3] = 1;
     pthread_exit(NULL);
 }
@@ -179,8 +192,8 @@ int main(int argc, char* argv[]) {
     // If a number is 0 that means the board is invalid
     for (i = 0; i < 27; i++) {
         if (valid[i] == 0) {
-            printf("Sudoku Board is invalid!\n");
-            return 0;
+        printf("Sudoku Board is invalid!\n");
+        return 0;
         }
     }
     printf("Sudoku Board is valid!\n");
